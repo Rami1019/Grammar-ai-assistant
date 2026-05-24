@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>English Grammar & Translation Assistant</title>
+    <meta name="theme-color" content="#2563eb">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="GrammarAI">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Basic custom styles for specific effects not easily done with Tailwind */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc; /* Slate 50 */
+        }
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3b82f6; /* Blue 500 */
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="min-h-screen text-slate-800 p-4 md:p-8 flex flex-col items-center">
+
+    <main class="w-full max-w-3xl bg-white rounded-2xl shadow-xl overflow-hidden">
+        
+        <!-- Header -->
+        <header class="bg-blue-600 text-white p-6 text-center relative">
+            <h1 class="text-2xl md:text-3xl font-bold mb-2">Grammar & Translation Assistant</h1>
+            <p class="text-blue-100 text-sm md:text-base">Powered by Gemini AI</p>
+            
+            <!-- Install Button (Hidden by default, shown when PWA can be installed) -->
+            <button id="installAppBtn" class="hidden absolute top-4 right-4 bg-white/20 hover:bg-white/30 text-white border border-white/40 text-xs md:text-sm font-medium py-1.5 px-3 rounded-full transition-colors flex items-center shadow-sm backdrop-blur-sm">
+                <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                Install App
+            </button>
+        </header>
+
+        <!-- Content Area -->
+        <div class="p-6 md:p-8 space-y-6">
+            
+            <!-- Input Section -->
+            <div>
+                <label for="inputText" class="block text-sm font-medium text-slate-700 mb-2">Enter your English sentence:</label>
+                <textarea 
+                    id="inputText" 
+                    rows="4" 
+                    class="w-full p-4 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-shadow resize-y"
+                    placeholder="e.g., I goes to the store yesterday to bought some milks."
+                ></textarea>
+            </div>
+
+            <!-- Action Button -->
+            <div class="flex justify-end">
+                <button 
+                    id="analyzeBtn" 
+                    class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg shadow-md transition-colors flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                    <span>Analyze & Translate</span>
+                    <div id="loadingIcon" class="loader hidden ml-2"></div>
+                </button>
+            </div>
+
+            <!-- Results Section (Hidden by default) -->
+            <div id="resultsSection" class="hidden space-y-6 mt-8 pt-6 border-t border-slate-200">
+                
+                <!-- Improved Sentence -->
+                <div class="bg-emerald-50 rounded-xl p-5 border border-emerald-100">
+                    <h3 class="text-lg font-semibold text-emerald-800 mb-4 flex items-center">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                        Improved English Versions
+                    </h3>
+                    
+                    <div class="space-y-4">
+                        <!-- Standard Version -->
+                        <div>
+                            <h4 class="text-sm font-bold text-emerald-700 uppercase tracking-wide">Standard (標準修正)</h4>
+                            <p id="improvedText" class="text-slate-800 text-lg mt-1"></p>
+                            <button class="mt-1 text-xs text-emerald-600 hover:text-emerald-800 underline" onclick="copyToClipboard('improvedText')">Copy</button>
+                        </div>
+
+                        <!-- Casual Version (Messaging) -->
+                        <div class="pt-3 border-t border-emerald-200/60">
+                            <h4 class="text-sm font-bold text-emerald-700 uppercase tracking-wide">Messaging (通訊群組溝通)</h4>
+                            <p id="casualText" class="text-slate-800 text-lg mt-1"></p>
+                            <button class="mt-1 text-xs text-emerald-600 hover:text-emerald-800 underline" onclick="copyToClipboard('casualText')">Copy</button>
+                        </div>
+
+                        <!-- Formal Version (Email) -->
+                        <div class="pt-3 border-t border-emerald-200/60">
+                            <h4 class="text-sm font-bold text-emerald-700 uppercase tracking-wide">Formal Email (Email正式通知)</h4>
+                            <p id="formalText" class="text-slate-800 text-lg mt-1"></p>
+                            <button class="mt-1 text-xs text-emerald-600 hover:text-emerald-800 underline" onclick="copyToClipboard('formalText')">Copy</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Explanation -->
+                <div class="bg-blue-50 rounded-xl p-5 border border-blue-100">
+                    <h3 class="text-lg font-semibold text-blue-800 mb-2 flex items-center">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        Grammar Explanation
+                    </h3>
+                    <div id="explanationText" class="text-slate-700 space-y-2 text-sm md:text-base leading-relaxed"></div>
+                </div>
+
+                <!-- Traditional Chinese Translation -->
+                <div class="bg-purple-50 rounded-xl p-5 border border-purple-100">
+                    <h3 class="text-lg font-semibold text-purple-800 mb-2 flex items-center">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"></path></svg>
+                        Traditional Chinese Translation
+                    </h3>
+                    <p id="translationText" class="text-slate-800 text-lg"></p>
+                    <button class="mt-2 text-sm text-purple-600 hover:text-purple-800 underline" onclick="copyToClipboard('translationText')">Copy</button>
+                </div>
+            </div>
+
+            <!-- Error Message -->
+            <div id="errorMessage" class="hidden bg-red-50 text-red-600 p-4 rounded-lg border border-red-200 mt-4 text-center">
+                Something went wrong. Please try again.
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        // System prompt to instruct the AI exactly how we want the output formatted
+        const SYSTEM_PROMPT = `You are an expert English grammar teacher and translator. 
+Your task is to analyze the user's English sentence, correct any grammatical errors, explain the corrections, and provide a Traditional Chinese (zh-TW) translation of the corrected sentence.
+In addition, provide two alternative versions of the corrected English sentence: one suitable for casual instant messaging (like Slack/Line for 通訊群組溝通), and one suitable for a formal professional email (Email正式通知).
+
+You MUST respond strictly in the following JSON format. Do not include markdown code blocks (like \`\`\`json) or any other text outside the JSON object.
+
+{
+  "improvedSentence": "The grammatically correct standard version of the user's sentence.",
+  "casualVersion": "A version of the improved sentence suitable for casual instant messaging (通訊群組溝通).",
+  "formalVersion": "A version of the improved sentence suitable for a formal email (Email正式通知).",
+  "explanation": "A clear, concise explanation of the grammatical changes made in BOTH English and Traditional Chinese (zh-TW). Provide the English explanation first, followed by the Chinese explanation. Use HTML tags like <p>, <ul>, <li>, or <strong> for formatting. Example: <p><strong>English:</strong> Explanation here.</p><p><strong>中文:</strong> 這裡放中文解釋。</p>",
+  "traditionalChineseTranslation": "The Traditional Chinese (zh-TW) translation of the IMPROVED sentence."
+}`;
+
+        // DOM Elements
+        const inputText = document.getElementById('inputText');
+        const analyzeBtn = document.getElementById('analyzeBtn');
+        const loadingIcon = document.getElementById('loadingIcon');
+        const resultsSection = document.getElementById('resultsSection');
+        const improvedText = document.getElementById('improvedText');
+        const casualText = document.getElementById('casualText');
+        const formalText = document.getElementById('formalText');
+        const explanationText = document.getElementById('explanationText');
+        const translationText = document.getElementById('translationText');
+        const errorMessage = document.getElementById('errorMessage');
+
+        // Event Listener for the Analyze Button
+        analyzeBtn.addEventListener('click', async () => {
+            const text = inputText.value.trim();
+            if (!text) return;
+
+            // UI State: Loading
+            setLoadingState(true);
+            hideResults();
+            hideError();
+
+            try {
+                // Prepare the payload for the Gemini API
+                const payload = {
+                    contents: [{ parts: [{ text: text }] }],
+                    systemInstruction: {
+                        parts: [{ text: SYSTEM_PROMPT }]
+                    },
+                    generationConfig: {
+                        responseMimeType: "application/json", // Request JSON output explicitly
+                    }
+                };
+
+                // IMPORTANT: Replace this with your actual Gemini API Key
+                // ⚠️ IMPORTANT: Please remember that putting your API key in front-end code is for demonstration or personal use only.
+                // Do not share this file publicly if it contains your actual key.
+                const apiKey = "AIzaSyCcLz6GptwQlX2LrnzVaQChTPMnVGu6pQo"; 
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                
+                // Parse the response
+                if (result.candidates && result.candidates.length > 0 &&
+                    result.candidates[0].content && result.candidates[0].content.parts &&
+                    result.candidates[0].content.parts.length > 0) {
+                    
+                    const jsonString = result.candidates[0].content.parts[0].text;
+                    const parsedData = JSON.parse(jsonString);
+
+                    // Update UI with results
+                    displayResults(parsedData);
+                } else {
+                    throw new Error("Unexpected response structure from API.");
+                }
+
+            } catch (error) {
+                console.error("Error analyzing text:", error);
+                showError();
+            } finally {
+                // UI State: Done Loading
+                setLoadingState(false);
+            }
+        });
+
+        // Helper Functions for UI Management
+        function setLoadingState(isLoading) {
+            analyzeBtn.disabled = isLoading;
+            if (isLoading) {
+                loadingIcon.classList.remove('hidden');
+                analyzeBtn.querySelector('span').textContent = 'Analyzing...';
+            } else {
+                loadingIcon.classList.add('hidden');
+                analyzeBtn.querySelector('span').textContent = 'Analyze & Translate';
+            }
+        }
+
+        function displayResults(data) {
+            improvedText.textContent = data.improvedSentence;
+            casualText.textContent = data.casualVersion;
+            formalText.textContent = data.formalVersion;
+            explanationText.innerHTML = data.explanation; // Using innerHTML as prompt suggests HTML tags might be returned
+            translationText.textContent = data.traditionalChineseTranslation;
+            
+            resultsSection.classList.remove('hidden');
+            // Smooth scroll to results
+            resultsSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        function hideResults() {
+            resultsSection.classList.add('hidden');
+        }
+
+        function showError() {
+            errorMessage.classList.remove('hidden');
+        }
+
+        function hideError() {
+            errorMessage.classList.add('hidden');
+        }
+
+        // Utility to copy text to clipboard
+        function copyToClipboard(elementId) {
+            const textToCopy = document.getElementById(elementId).textContent;
+            
+            // Using a temporary textarea as it's more reliable across different environments (like iframes)
+            const textArea = document.createElement("textarea");
+            textArea.value = textToCopy;
+            document.body.appendChild(textArea);
+            textArea.select();
+            
+            try {
+                document.execCommand('copy');
+                // Could add a small toast notification here in a more complex app
+            } catch (err) {
+                console.error('Oops, unable to copy', err);
+            }
+            
+            document.body.removeChild(textArea);
+        }
+
+        // Allow pressing Enter (Ctrl+Enter or Cmd+Enter) in the textarea to submit
+        inputText.addEventListener('keydown', function(e) {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                analyzeBtn.click();
+            }
+        });
+
+        // ==========================================
+        // PWA Setup (Dynamically injected for single-file structure)
+        // ==========================================
+        
+        // 1. Generate Manifest dynamically
+        const manifest = {
+            "name": "Grammar & Translation Assistant",
+            "short_name": "GrammarAI",
+            "start_url": window.location.href,
+            "display": "standalone",
+            "background_color": "#f8fafc",
+            "theme_color": "#2563eb",
+            "icons": [{
+                // Using a generic placeholder icon for demonstration
+                "src": "https://placehold.co/512x512/2563eb/ffffff?text=G",
+                "sizes": "512x512",
+                "type": "image/png",
+                "purpose": "any maskable"
+            }]
+        };
+        const manifestBlob = new Blob([JSON.stringify(manifest)], {type: 'application/json'});
+        const manifestUrl = URL.createObjectURL(manifestBlob);
+        document.head.insertAdjacentHTML('beforeend', `<link rel="manifest" href="${manifestUrl}">`);
+
+        // 2. Generate Service Worker dynamically (required for installability)
+        const swCode = `
+            self.addEventListener('install', (e) => { self.skipWaiting(); });
+            self.addEventListener('activate', (e) => { e.waitUntil(self.clients.claim()); });
+            self.addEventListener('fetch', (e) => { 
+                // Dummy fetch listener to pass PWA criteria. 
+                // Real apps would cache assets here.
+            });
+        `;
+        const swBlob = new Blob([swCode], {type: 'application/javascript'});
+        const swUrl = URL.createObjectURL(swBlob);
+        
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register(swUrl)
+                .then(() => console.log('Service Worker Registered'))
+                .catch(err => console.log('Service Worker Registration Failed', err));
+        }
+
+        // 3. Handle Install Button Logic
+        let deferredPrompt;
+        const installAppBtn = document.getElementById('installAppBtn');
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            // Prevent Chrome 67 and earlier from automatically showing the prompt
+            e.preventDefault();
+            // Stash the event so it can be triggered later.
+            deferredPrompt = e;
+            // Update UI to notify the user they can add to home screen
+            installAppBtn.classList.remove('hidden');
+        });
+
+        installAppBtn.addEventListener('click', async () => {
+            if (deferredPrompt) {
+                // Show the install prompt
+                deferredPrompt.prompt();
+                // Wait for the user to respond to the prompt
+                const { outcome } = await deferredPrompt.userChoice;
+                if (outcome === 'accepted') {
+                    console.log('User accepted the install prompt');
+                } else {
+                    console.log('User dismissed the install prompt');
+                }
+                // We've used the prompt, and can't use it again, throw it away
+                deferredPrompt = null;
+                installAppBtn.classList.add('hidden');
+            }
+        });
+
+        window.addEventListener('appinstalled', () => {
+            // Hide the app-provided install promotion
+            installAppBtn.classList.add('hidden');
+            // Clear the deferredPrompt so it can be garbage collected
+            deferredPrompt = null;
+            console.log('PWA was installed');
+        });
+    </script>
+</body>
+</html>
